@@ -1,57 +1,57 @@
 const express = require('express');
-const app = express();
 const fs = require('fs');
 const path = require('path');
 
-const port = process.env.PORT || 3000; // <== обязательно
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Файл, в который будем сохранять персонажей
+const charactersFile = path.join(__dirname, 'Kartochki_Personazhej_26072025_New.txt');
 
 app.use(express.json());
 
-// Простой тестовый маршрут
+// Проверка, что API жив
 app.get('/', (req, res) => {
   res.send('OSA API is live and working!');
 });
 
-// Путь к JSON-файлу с персонажами
-const dataFilePath = path.join(__dirname, 'characters.json');
-
-// Чтение файла персонажей
-function readCharacters() {
-  if (!fs.existsSync(dataFilePath)) return [];
-  const raw = fs.readFileSync(dataFilePath);
-  return JSON.parse(raw);
-}
-
-// Сохранение персонажей
-function saveCharacters(characters) {
-  fs.writeFileSync(dataFilePath, JSON.stringify(characters, null, 2));
-}
-
-// Получить всех персонажей
+// Получить всех персонажей (текстом)
 app.get('/characters', (req, res) => {
-  res.json(readCharacters());
+  fs.readFile(charactersFile, 'utf-8', (err, data) => {
+    if (err) {
+      console.error('Ошибка при чтении файла:', err);
+      return res.status(500).json({ error: 'Не удалось прочитать файл персонажей.' });
+    }
+    res.type('text/plain').send(data);
+  });
 });
 
 // Добавить нового персонажа
 app.post('/characters', (req, res) => {
-  const characters = readCharacters();
-  characters.push(req.body);
-  saveCharacters(characters);
-  res.status(201).send({ message: 'Character added.' });
+  const character = req.body;
+
+  if (!character.name) {
+    return res.status(400).json({ error: 'Имя персонажа обязательно.' });
+  }
+
+  const block = `
+==============================
+Имя: ${character.name}
+Описание: ${character.description || 'Нет описания'}
+Возраст: ${character.age || 'Не указан'}
+Магия: ${character.magic || 'Не указана'}
+==============================\n`;
+
+  fs.appendFile(charactersFile, block, (err) => {
+    if (err) {
+      console.error('Ошибка при записи персонажа:', err);
+      return res.status(500).json({ error: 'Не удалось сохранить персонажа.' });
+    }
+
+    res.status(201).json({ message: 'Персонаж успешно добавлен.' });
+  });
 });
 
-// Обновить персонажа по имени
-app.patch('/characters/:name', (req, res) => {
-  let characters = readCharacters();
-  const index = characters.findIndex(c => c.name === req.params.name);
-  if (index === -1) return res.status(404).send({ error: 'Character not found' });
-
-  characters[index] = { ...characters[index], ...req.body };
-  saveCharacters(characters);
-  res.send({ message: 'Character updated.' });
-});
-
-// ✅ Только один вызов listen!
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+app.listen(PORT, () => {
+  console.log(`OSA API is running on port ${PORT}`);
 });
