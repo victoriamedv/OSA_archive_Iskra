@@ -2,6 +2,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
+const { exec } = require('child_process');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -9,22 +10,32 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// 📁 Путь к файлу персонажей
 const charactersFile = path.join(__dirname, 'characters', 'Kartochki_Personazhej_26072025_New.txt');
 
-// 🔧 Проверка и создание файла при запуске
 if (!fs.existsSync(charactersFile)) {
   fs.mkdirSync(path.dirname(charactersFile), { recursive: true });
   fs.writeFileSync(charactersFile, '', 'utf-8');
   console.log('Создан файл персонажей по пути:', charactersFile);
 }
 
-// ✅ Проверка, что API жив
+function pushToGitHub() {
+  exec('bash push-to-github.sh', (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Ошибка при пуше: ${error.message}`);
+      return;
+    }
+    if (stderr) {
+      console.error(`Пуш stderr: ${stderr}`);
+      return;
+    }
+    console.log(`Пуш выполнен успешно:\n${stdout}`);
+  });
+}
+
 app.get('/', (req, res) => {
   res.send('OSA API is live and working!');
 });
 
-// 📥 Получить всех персонажей (текстом)
 app.get('/characters', (req, res) => {
   fs.readFile(charactersFile, 'utf-8', (err, data) => {
     if (err) {
@@ -35,7 +46,6 @@ app.get('/characters', (req, res) => {
   });
 });
 
-// ➕ Добавить нового персонажа
 app.post('/characters', (req, res) => {
   const character = req.body;
 
@@ -57,11 +67,13 @@ app.post('/characters', (req, res) => {
       return res.status(500).json({ error: 'Не удалось сохранить персонажа.' });
     }
 
+    // Вызываем пуш в GitHub
+    pushToGitHub();
+
     res.status(201).json({ message: 'Персонаж успешно добавлен.' });
   });
 });
 
-// 🚀 Запуск сервера
 app.listen(PORT, () => {
   console.log(`✅ OSA API is running on port ${PORT}`);
 });
