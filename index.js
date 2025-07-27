@@ -3,7 +3,14 @@ const app = express();
 const fs = require('fs');
 const path = require('path');
 
+const port = process.env.PORT || 3000; // <== обязательно
+
 app.use(express.json());
+
+// Простой тестовый маршрут
+app.get('/', (req, res) => {
+  res.send('OSA API is live and working!');
+});
 
 // Путь к JSON-файлу с персонажами
 const dataFilePath = path.join(__dirname, 'characters.json');
@@ -44,6 +51,7 @@ app.patch('/characters/:name', (req, res) => {
   res.send({ message: 'Character updated.' });
 });
 
-app.listen(process.env.PORT || 3000, () => {
-  console.log('Server running');
+// ✅ Только один вызов listen!
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
