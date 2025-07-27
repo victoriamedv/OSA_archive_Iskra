@@ -1,0 +1,39 @@
+openapi: 3.1.0
+info:
+  title: OSA Character API
+  version: 1.0.0
+servers:
+  - url: https://osa-archive-iskra.onrender.com
+paths:
+  /characters:
+    get:
+      summary: Получить список всех персонажей
+      operationId: getCharacters
+      responses:
+        '200':
+          description: Список персонажей
+          content:
+            text/plain:
+              schema:
+                type: string
+    post:
+      summary: Добавить нового персонажа
+      operationId: addCharacter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                age:
+                  type: string
+                magic:
+                  type: string
+      responses:
+        '201':
+          description: Персонаж добавлен
