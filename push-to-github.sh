@@ -33,26 +33,31 @@ fi
 # Проверка .gitignore
 if [ ! -f ".gitignore" ]; then
   echo "Файл .gitignore не найден, создаю его" | tee -a git-status.log
-  echo -e "node_modules/\n*.log\n.package-lock.json" > .gitignore
+  echo -e "node_modules/\n*.log\n.package-lock.json\npush-to-github.sh" > .gitignore
   git add .gitignore
-  git commit -m "Добавление .gitignore для исключения node_modules и логов" || { echo "Ошибка при коммите .gitignore" | tee -a git-status.log; exit 1; }
+  git commit -m "Добавление .gitignore для исключения node_modules, логов и push-to-github.sh" || { echo "Ошибка при коммите .gitignore" | tee -a git-status.log; exit 1; }
 fi
 
-# Обработка незакоммиченных изменений
-if ! git diff --quiet || ! git diff --cached --quiet; then
-  echo "Обнаружены незакоммиченные изменения. Проверяю файлы:" | tee -a git-status.log
-  git status --short >> git-status.log
-  # Коммитим только нужный файл, игнорируя остальные
-  git add characters/Kartochki_Personazhej_26072025_New.txt || { echo "Ошибка при git add characters" | tee -a git-status.log; exit 1; }
-  if ! git diff --cached --quiet; then
-    git commit -m "📝 Auto-update: персонажи ОСА" || { echo "Ошибка при git commit" | tee -a git-status.log; exit 1; }
-  fi
-  # Сбрасываем остальные незакоммиченные изменения (например, push-to-github.sh)
-  git checkout -- . || { echo "Ошибка при сбросе незакоммиченных изменений" | tee -a git-status.log; exit 1; }
+# Сбрасываем все незакоммиченные изменения, кроме characters/Kartochki_Personazhej_26072025_New.txt
+echo "Сохраняю изменения в characters/Kartochki_Personazhej_26072025_New.txt" | tee -a git-status.log
+git add characters/Kartochki_Personazhej_26072025_New.txt || { echo "Ошибка при git add characters" | tee -a git-status.log; exit 1; }
+if ! git diff --cached --quiet; then
+  git commit -m "📝 Auto-update: персонажи ОСА" || { echo "Ошибка при git commit" | tee -a git-status.log; exit 1; }
 fi
+echo "Сбрасываю остальные незакоммиченные изменения" | tee -a git-status.log
+git checkout -- . || { echo "Ошибка при сбросе незакоммиченных изменений" | tee -a git-status.log; exit 1; }
 
-# Синхронизация с удалённым репозиторием
-git pull origin main --rebase || { echo "Ошибка при git pull --rebase" | tee -a git-status.log; exit 1; }
+# Принудительная синхронизация с origin/main для избежания конфликтов
+echo "Синхронизация с origin/main" | tee -a git-status.log
+git fetch origin main || { echo "Ошибка при git fetch" | tee -a git-status.log; exit 1; }
+git reset --hard origin/main || { echo "Ошибка при git reset --hard" | tee -a git-status.log; exit 1; }
+
+# Повторное добавление изменений в characters/Kartochki_Personazhej_26072025_New.txt
+echo "Повторное добавление изменений в characters/Kartochki_Personazhej_26072025_New.txt" | tee -a git-status.log
+git add characters/Kartochki_Personazhej_26072025_New.txt || { echo "Ошибка при повторном git add characters" | tee -a git-status.log; exit 1; }
+if ! git diff --cached --quiet; then
+  git commit -m "📝 Auto-update: персонажи ОСА" || { echo "Ошибка при повторном git commit" | tee -a git-status.log; exit 1; }
+fi
 
 # Проверка, есть ли изменения для пуша
 if ! git diff origin/main --quiet; then
