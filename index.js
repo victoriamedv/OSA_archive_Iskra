@@ -1,8 +1,10 @@
 const express = require('express');
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
 const cors = require('cors');
 const { exec } = require('child_process');
+const util = require('util');
+const execPromise = util.promisify(exec);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,41 +14,49 @@ app.use(express.json());
 
 const charactersFile = path.join(__dirname, 'characters', 'Kartochki_Personazhej_26072025_New.txt');
 
-if (!fs.existsSync(charactersFile)) {
-  fs.mkdirSync(path.dirname(charactersFile), { recursive: true });
-  fs.writeFileSync(charactersFile, '', 'utf-8');
-  console.log('Создан файл персонажей по пути:', charactersFile);
+async function initFile() {
+  try {
+    await fs.access(charactersFile);
+    console.log('Файл персонажей найден:', charactersFile);
+  } catch {
+    await fs.mkdir(path.dirname(charactersFile), { recursive: true });
+    await fs.writeFile(charactersFile, '', 'utf-8');
+    console.log('Создан файл персонажей:', charactersFile);
+  }
 }
 
-function pushToGitHub() {
-  exec('bash push-to-github.sh', (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Ошибка при пуше: ${error.message}`);
-      return;
-    }
-    if (stderr) {
-      console.error(`Пуш stderr: ${stderr}`);
-      return;
-    }
+async function pushToGitHub() {
+  try {
+    const { stdout, stderr } = await execPromise('bash push-to-github.sh');
+    await fs.appendFile('push.log', `Успех ${new Date().toISOString()}:\n${stdout}\n${stderr}\n`);
     console.log(`Пуш выполнен успешно:\n${stdout}`);
-  });
+    return true;
+  } catch (error) {
+    console.error(`Ошибка при пуше: ${error.message}\n${error.stderr}`);
+    await fs.appendFile('push.log', `Ошибка ${new Date().toISOString()}: ${error.message}\n${error.stderr}\n`);
+    throw error;
+  }
 }
+
+app.get('/healthz', (req, res) => {
+  res.status(200).send('OK');
+});
 
 app.get('/', (req, res) => {
   res.send('OSA API is live and working!');
 });
 
-app.get('/characters', (req, res) => {
-  fs.readFile(charactersFile, 'utf-8', (err, data) => {
-    if (err) {
-      console.error('Ошибка при чтении файла:', err);
-      return res.status(500).json({ error: 'Не удалось прочитать файл персонажей.' });
-    }
+app.get('/characters', async (req, res) => {
+  try {
+    const data = await fs.readFile(charactersFile, 'utf-8');
     res.type('text/plain').send(data);
-  });
+  } catch (err) {
+    console.error('Ошибка при чтении файла:', err);
+    res.status(500).json({ error: 'Не удалось прочитать файл персонажей.' });
+  }
 });
 
-app.post('/characters', (req, res) => {
+app.post('/characters', async (req, res) => {
   const character = req.body;
 
   if (!character.name) {
@@ -61,19 +71,26 @@ app.post('/characters', (req, res) => {
 Магия: ${character.magic || 'Не указана'}
 ==============================\n`;
 
-  fs.appendFile(charactersFile, block, (err) => {
-    if (err) {
-      console.error('Ошибка при записи персонажа:', err);
-      return res.status(500).json({ error: 'Не удалось сохранить персонажа.' });
-    }
-
-    // Вызываем пуш в GitHub
-    pushToGitHub();
-
+  try {
+    await fs.access(charactersFile, fs.constants.W_OK);
+    await fs.appendFile(charactersFile, block);
+    await pushToGitHub();
     res.status(201).json({ message: 'Персонаж успешно добавлен.' });
-  });
+  } catch (err) {
+    console.error('Ошибка при записи или пуше:', err);
+    res.status(500).json({ error: 'Не удалось сохранить персонажа или пушить в GitHub.' });
+  }
 });
 
-app.listen(PORT, () => {
+app.get('/openapi.yaml', (req, res) => {
+  res.sendFile(path.join(__dirname, 'openapi.yaml'));
+});
+
+app.get('/.well-known/ai-plugin.json', (req, res) => {
+  res.sendFile(path.join(__dirname, '.well-known', 'ai-plugin.json'));
+});
+
+app.listen(PORT, async () => {
+  await initFile();
   console.log(`✅ OSA API is running on port ${PORT}`);
 });
