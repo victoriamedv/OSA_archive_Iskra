@@ -5,8 +5,8 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Файл, в который будем сохранять персонажей
-const charactersFile = path.join(__dirname, 'Kartochki_Personazhej_26072025_New.txt');
+// ✅ Указание файла в папке "characters"
+const charactersFile = path.join(__dirname, 'characters', 'Kartochki_Personazhej_26072025_New.txt');
 
 app.use(express.json());
 
