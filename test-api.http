@@ -1,0 +1,16 @@
+### Проверка — API жив?
+GET http://localhost:3000/
+
+### Получить список персонажей
+GET http://localhost:3000/characters
+
+### Добавить нового персонажа
+POST http://localhost:3000/characters
+Content-Type: application/json
+
+{
+  "name": "Тест Персонаж",
+  "description": "Описание для теста",
+  "age": 150,
+  "magic": "Контроль времени"
+}

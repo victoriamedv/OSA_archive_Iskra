@@ -4,6 +4,8 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const cors = require('cors');
+app.use(cors());
 
 // ✅ Указание файла в папке "characters"
 const charactersFile = path.join(__dirname, 'characters', 'Kartochki_Personazhej_26072025_New.txt');
