@@ -1,0 +1,33 @@
+{
+  "character": {
+    "id": "1",
+    "name": "Арин",
+    "pseudonyms": [],
+    "status": "воин",
+    "age": "150",
+    "race": "эльф",
+    "height": "Неизвестна",
+    "actual": true
+  },
+  "appearance": {},
+  "clothing": {},
+  "personality": {
+    "traits": [
+      "любопытный",
+      "смелый"
+    ]
+  },
+  "relationships": {
+    "with_rin": {},
+    "with_others": []
+  },
+  "magic": {
+    "type": "природная магия"
+  },
+  "artifacts_equipment": [],
+  "status_after_rewrite": {},
+  "origin": {},
+  "quotes": [],
+  "osa_commands": {},
+  "notes": ""
+}
