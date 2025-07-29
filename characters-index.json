@@ -388,6 +388,26 @@
         "неизвестен",
         "mem_entity"
       ]
+    },
+    {
+      "id": "21",
+      "name": "ПЕРСОНАЖ / Псевдоним / Статус",
+      "pseudonyms": [],
+      "status": "Неизвестен",
+      "race": "Неизвестна",
+      "age": "Неизвестен",
+      "searchTerms": [
+        "персонаж / псевдоним / статус",
+        "неизвестна",
+        "неизвестен",
+        "mouse",
+        "override",
+        "detected",
+        "unassigned",
+        "entity",
+        "priority",
+        "preserved"
+      ]
     }
   ]
 }
